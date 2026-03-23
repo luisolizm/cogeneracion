@@ -3,15 +3,10 @@ credentials:
     luxem:
       email: luis.soliz@teamleading-cpm.com
       name: Luis Soliz
-      password: Luxem2026!Segura123   # ← CAMBIA ESTO por algo MUY fuerte (no lo subas real a GitHub si es público)
-
+      password: CambiaEstaPorUnaMuyFuerte2026!   # ¡cámbiala! (se hashea automáticamente)
 cookie:
   expiry_days: 30
-  key: superclave_secreta_2026_xyz_random_987654   # ← Pon algo largo y único (no lo compartas nunca)
+  key: tu_clave_secreta_larga_y_random_aqui   # pon algo único, ej: "miapp_segura_2026_xyz987"
   name: cogeneracion_cookie
-
-# Opcional: agrega esto aunque esté vacío para evitar futuros problemas
-preauthorized:
-  emails: []
 
 
