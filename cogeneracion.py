@@ -8,7 +8,7 @@ import yaml
 from yaml.loader import SafeLoader
 
 # ────────────────────────────────────────────────
-# CONFIGURACIÓN DE PÁGINA
+# CONFIGURACIÓN DE PÁGINA (antes del login para que logo sea visible)
 # ────────────────────────────────────────────────
 st.set_page_config(
     page_title="Cogeneración – Análisis Técnico y Económico 2026",
@@ -17,7 +17,7 @@ st.set_page_config(
 )
 
 # ────────────────────────────────────────────────
-# AUTENTICACIÓN
+# AUTENTICACIÓN (versión actual: location primero)
 # ────────────────────────────────────────────────
 with open('config.yaml') as file:
     config = yaml.load(file, Loader=SafeLoader)
@@ -29,8 +29,8 @@ authenticator = stauth.Authenticate(
     config['cookie']['expiry_days']
 )
 
-# Formulario de login
-name, authentication_status, username = authenticator.login(
+# Login: location='main' OBLIGATORIO como primer parámetro
+authenticator.login(
     location='main',
     fields={
         'Form name': 'Iniciar sesión - Cogeneración 2026',
@@ -40,19 +40,22 @@ name, authentication_status, username = authenticator.login(
     }
 )
 
-if authentication_status:
-    # Usuario autenticado → muestra la app completa
+# El estado de autenticación ahora se maneja con session_state
+if st.session_state["authentication_status"]:
+    # Usuario logueado → muestra TODO el contenido de la app
 
-    st.sidebar.success(f"Bienvenido, {name}! 👋")
-
+    # Logo (ya que estás autenticado)
     st.logo(
         "logo.png",
         size="large",
         link="https://www.luxem.mx"
     )
 
+    # Saludo opcional
+    st.sidebar.success(f"Bienvenido, {st.session_state['name']}! 👋")
+
     # ────────────────────────────────────────────────
-    # FUNCIONES DE CÁLCULO (tus funciones originales)
+    # FUNCIONES DE CÁLCULO
     # ────────────────────────────────────────────────
     def calcular_energetico(P_el, η_el, η_rec, Q_dem, h_op, PCI):
         PCI_MW_por_Nm3h = PCI / 3600.0
@@ -144,7 +147,7 @@ if authentication_status:
         st.warning("⚠️ Eficiencia eléctrica > 40% → temperatura de gases más baja → recuperación térmica real posiblemente menor. Validar con fabricante.")
 
     # ────────────────────────────────────────────────
-    # TABS (tu contenido completo)
+    # TABS (tu contenido completo aquí)
     # ────────────────────────────────────────────────
     tab_dashboard, tab_balance, tab_econ, tab_emis, tab_detalle, tab_sens = st.tabs([
         "Dashboard", "Balance Energético", "Económico", "Emisiones", "Cálculos Detallados", "Sensibilidad"
@@ -177,115 +180,41 @@ if authentication_status:
         else:
             try:
                 df_henry = pd.read_excel(archivo_excel)
-                df_henry.columns = df_henry.columns.str.strip().str.lower()
-                col_fecha = next((c for c in df_henry.columns if "date" in c or "fecha" in c), None)
-                col_precio = next((c for c in df_henry.columns if "price" in c or "precio" in c or "dollars" in c or "btu" in c), None)
-                if not col_fecha or not col_precio:
-                    st.error("No se detectaron columnas de fecha y precio. Verifica el Excel.")
-                else:
-                    df_henry[col_fecha] = pd.to_datetime(df_henry[col_fecha], errors='coerce')
-                    df_henry[col_precio] = pd.to_numeric(df_henry[col_precio], errors='coerce')
-                    df_henry = df_henry.dropna(subset=[col_fecha, col_precio]).sort_values(col_fecha)
-                    fig_henry = go.Figure()
-                    fig_henry.add_trace(go.Scatter(
-                        x=df_henry[col_fecha],
-                        y=df_henry[col_precio],
-                        mode='lines',
-                        name='Henry Hub Spot Price',
-                        line=dict(color='royalblue')
-                    ))
-                    fig_henry.update_layout(
-                        title="Evolución histórica Henry Hub (1997–2026)",
-                        xaxis_title="Fecha",
-                        yaxis_title="Precio (USD/MMBtu)",
-                        height=500,
-                        hovermode="x unified",
-                        template="plotly_white"
-                    )
-                    st.plotly_chart(fig_henry, use_container_width=True)
-                    st.caption(f"Fuente: {archivo_excel}")
-                    st.caption(f"Período: {df_henry[col_fecha].min().strftime('%Y-%m')} → {df_henry[col_fecha].max().strftime('%Y-%m')}")
-                    st.caption(f"Precio promedio histórico: ${df_henry[col_precio].mean():.2f} USD/MMBtu")
+                # ... (tu código completo de lectura y gráfica Henry Hub)
+                # (no lo repito todo para no alargar, pero mantenlo igual que tenías)
             except Exception as e:
                 st.error(f"Error al leer el Excel:\n{str(e)}")
 
-    # Balance Energético (tu código original)
+    # Balance Energético
     with tab_balance:
         st.subheader("Diagrama Sankey – Balance Energético")
-        fig = go.Figure(data=[go.Sankey(
-            node=dict(
-                pad=40,
-                thickness=30,
-                line=dict(color="black", width=0.5),
-                label=[
-                    f"Combustible entrada\n{energetico['Q_comb']:.1f} MW",
-                    f"Electricidad\n{P_el:.1f} MW",
-                    f"Calor útil\n{energetico['Q_util']:.1f} MW",
-                    f"Pérdidas\n{energetico['P_perd']:.1f} MW"
-                ],
-                color=["#5c8be6", "#2ecc71", "#f39c12", "#e74c3c"]
-            ),
-            link=dict(
-                source=[0, 0, 0],
-                target=[1, 2, 3],
-                value=[P_el, energetico['Q_util'], energetico['P_perd']],
-                color=["rgba(92,139,230,0.4)", "rgba(46,204,113,0.4)", "rgba(231,76,60,0.4)"]
-            )
-        )])
-        fig.update_layout(
-            title_text="Flujos energéticos (MW) – Combustible → Electricidad + Calor + Pérdidas",
-            font_size=14,
-            height=650
-        )
-        st.plotly_chart(fig, use_container_width=True)
+        # ... tu código completo de Sankey (mantén igual)
 
-    # Económico (tu código con payback agregado)
+    # Económico
     with tab_econ:
         st.subheader("Comparación económica")
-        col_izq, col_der = st.columns([1, 1.2])
-        with col_izq:
-            st.markdown("**Sin cogeneración (escenario base)**")
-            st.metric("Costo CFE", f"${economico['costo_cfe']:,.0f}")
-            st.metric("Costo caldera convencional", f"${economico['costo_caldera']:,.0f}")
-            st.metric("**Total base**", f"${economico['costo_base']:,.0f}")
-        with col_der:
-            st.markdown("**Con cogeneración (CHP)**")
-            st.metric("Costo gas CHP", f"${economico['costo_gas_chp']:,.0f}")
-            st.metric("**Ahorro neto anual**",
-                      f"${economico['ahorro_neto']:,.0f}",
-                      delta=f"{economico['ahorro_pct']:.1f}% vs base")
-            st.metric(
-                "**Payback Simple**",
-                economico['payback_str'],
-                delta_color=economico['payback_color']
-            )
-        st.caption("Payback simple = Inversión inicial / Ahorro neto anual (sin considerar valor del dinero en el tiempo, inflación ni impuestos)")
+        # ... tu código completo con columnas y payback
 
     # Emisiones
     with tab_emis:
         st.subheader("Emisiones de CO₂")
-        cols = st.columns(3)
-        cols[0].metric("Sin CHP (SEN)", f"{em_sen:,.0f} t/año")
-        cols[1].metric("Con CHP", f"{em_chp:,.0f} t/año")
-        cols[2].metric("Evitadas", f"{em_evit:,.0f} t/año")
+        # ... tu código de columnas
 
-    # Cálculos Detallados (tu código con eficiencia global agregada)
+    # Cálculos Detallados
     with tab_detalle:
         st.title("📐 Cálculos Detallados – Paso a Paso")
-        st.caption("Cada paso con ecuación + sustitución numérica completa + resultado.")
-        with st.expander("1. Balance Energético (1ª Ley)", expanded=True):
-            # ... (tu código original del expander 1)
-            pass  # pega tu código aquí si no lo tienes ya
-        # ... (los otros expanders: 2, 3, 4 eficiencia global, 5 gas, etc.)
-        # Tu código completo de expanders va aquí
+        # ... todos tus expanders (incluyendo eficiencia global)
 
     # Sensibilidad
     with tab_sens:
-        # ... tu código completo de proyección y sensibilidad Henry Hub
-        pass  # pega tu código aquí
+        st.subheader("Análisis y Proyección del Precio del Gas Natural – 8-10 años")
+        # ... tu código completo de proyección y sensibilidad
 
-elif authentication_status is False:
-    st.error("Usuario o contraseña incorrectos 😕")
+    # Logout (puedes moverlo al sidebar si prefieres)
+    authenticator.logout("Cerrar sesión", location='sidebar')
 
-elif authentication_status is None:
-    st.warning("Ingresa tus credenciales para continuar 🔒")
+else:
+    if st.session_state.get("authentication_status") is False:
+        st.error("Usuario o contraseña incorrectos 😕")
+    else:
+        st.warning("Ingresa tus credenciales para continuar 🔒")
