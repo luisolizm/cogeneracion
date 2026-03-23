@@ -1,0 +1,15 @@
+credentials:
+  usernames:
+    luis:  # tu usuario (puedes poner el que quieras)
+      email: tuemail@ejemplo.com
+      name: Luis Soliz
+      password: tu_contrasena_fuerte   # ¡cámbiala por una real y segura!
+
+cookie:
+  expiry_days: 30
+  key: alguna_clave_secreta_larga_y_random   # pon algo como "supersecreto123xyz" (cualquier string único)
+  name: cogeneracion_cookie
+
+preauthorized:
+  emails:
+    - otroemail@ejemplo.com   # opcional: emails que pueden registrarse solos
