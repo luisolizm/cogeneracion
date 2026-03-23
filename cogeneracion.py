@@ -3,6 +3,42 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import os
+import streamlit_authenticator as stauth
+import yaml
+from yaml.loader import SafeLoader
+
+# Carga la config desde el archivo YAML
+with open('config.yaml') as file:
+    config = yaml.load(file, Loader=SafeLoader)
+
+# Crea el autenticador
+authenticator = stauth.Authenticate(
+    config['credentials'],
+    config['cookie']['name'],
+    config['cookie']['key'],
+    config['cookie']['expiry_days'],
+    config['preauthorized']
+)
+
+# Muestra el formulario de login
+name, authentication_status, username = authenticator.login('Iniciar sesión', 'main')
+
+if authentication_status:
+    # ¡Usuario logueado! Aquí va TODO tu código actual de la app
+    st.sidebar.write(f"Bienvenido, {name}!")  # opcional: saludo
+    
+    # Tu st.set_page_config va aquí o antes, pero asegúrate que no interfiera
+    # ... resto de tu código: sliders, tabs, cálculos, todo lo que tenías antes ...
+
+    # Al final, botón de logout
+    authenticator.logout("Cerrar sesión", "sidebar")
+
+elif authentication_status is False:
+    st.error("Usuario o contraseña incorrectos")
+
+elif authentication_status is None:
+    st.warning("Por favor ingresa usuario y contraseña")
+
 
 st.set_page_config(page_title="Cogeneración – Análisis Técnico y Económico 2026", layout="wide")
 
