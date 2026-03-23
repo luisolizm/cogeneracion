@@ -299,7 +299,7 @@ with tab_detalle:
         st.write(f"- Potencia eléctrica: **{P_el:.2f} MW**")
         st.write(f"- Calor útil aprovechado: **{energetico['Q_util']:.2f} MW**")
         st.write(f"- Energía útil total: {P_el + energetico['Q_util']:.2f} MW")
-        st.write(f"- Combustible entrante (Q_comb): **{energetico['Q_comb']:.2f} MW**")
+        st.write(f"- Combustible entrante: **{energetico['Q_comb']:.2f} MW**")
     
         st.latex(
          r"\eta_{\text{global}} = \frac{" + 
