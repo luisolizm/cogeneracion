@@ -5,5 +5,5 @@ plotly
 openpyxl
 pillow
 xlrd>=2.0.1
-matplotlib
 streamlit-authenticator
+pyyaml
