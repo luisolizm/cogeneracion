@@ -7,37 +7,42 @@ import streamlit_authenticator as stauth
 import yaml
 from yaml.loader import SafeLoader
 
+# Carga config
 with open('config.yaml') as file:
     config = yaml.load(file, Loader=SafeLoader)
 
+# Crea autenticador (sin preauthorized si no lo usas)
 authenticator = stauth.Authenticate(
     config['credentials'],
     config['cookie']['name'],
     config['cookie']['key'],
     config['cookie']['expiry_days']
-    # sin preauthorized si no lo usas
 )
 
 # Login corregido
 name, authentication_status, username = authenticator.login(
     location='main',
-    fields={'Form name': 'Iniciar sesión en Cogeneración 2026'}
+    fields={'Form name': 'Iniciar sesión', 'Username': 'Usuario', 'Password': 'Contraseña', 'Login': 'Entrar'}
 )
 
 if authentication_status:
-    # Aquí va TODO tu app: sidebar, tabs, cálculos, etc.
-    st.sidebar.write(f"Bienvenido, {name}! 👋")
+    # ¡Usuario autenticado! Aquí va TODO el resto de tu app
+    st.sidebar.success(f"Bienvenido, {name}! 👋")
     
-    # Tu st.set_page_config puede ir antes del login, pero si interfiere, muévelo aquí
-    # ... resto de tu código original ...
-
-    authenticator.logout("Cerrar sesión", location='sidebar')  # o 'main'
+    # Tu código original aquí: st.set_page_config (si no está antes), sidebar sliders, tabs, cálculos, etc.
+    # Ejemplo:
+    # with st.sidebar:
+    #     st.header("Parámetros de diseño")
+    #     ... tus sliders ...
+    
+    # Al final del script (o en sidebar):
+    authenticator.logout("Cerrar sesión", location='sidebar')
 
 elif authentication_status is False:
     st.error("Usuario o contraseña incorrectos 😕")
 
 elif authentication_status is None:
-    st.warning("Ingresa tu usuario y contraseña para continuar 🔒")
+    st.warning("Por favor ingresa tus credenciales para acceder 🔒")
 
 st.set_page_config(page_title="Cogeneración – Análisis Técnico y Económico 2026", layout="wide")
 
