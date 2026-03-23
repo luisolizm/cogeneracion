@@ -8,7 +8,7 @@ import yaml
 from yaml.loader import SafeLoader
 
 # ────────────────────────────────────────────────
-# CONFIGURACIÓN DE PÁGINA (puede ir antes del login si quieres ícono/logo visible siempre)
+# CONFIGURACIÓN DE PÁGINA (lo ponemos antes del login para que el ícono/logo sea visible siempre)
 st.set_page_config(
     page_title="Cogeneración – Análisis Técnico y Económico 2026",
     layout="wide",
@@ -28,7 +28,7 @@ authenticator = stauth.Authenticate(
     config['cookie']['expiry_days']
 )
 
-# Formulario de login (versión actual: location primero)
+# Formulario de login corregido (versión actual: location primero + fields como dict)
 name, authentication_status, username = authenticator.login(
     location='main',
     fields={
@@ -40,13 +40,83 @@ name, authentication_status, username = authenticator.login(
 )
 
 if authentication_status:
-    # ────────────────────────────────────────────────
-    # LOGO (si lo tienes)
-    # st.logo("logo.png", size="large")   # descomenta si usas st.logo
+    # Usuario autenticado → aquí va toda la app
 
-    # Saludo opcional
+    # Saludo opcional en sidebar
     st.sidebar.success(f"Bienvenido, {name}! 👋")
 
+    # ────────────────────────────────────────────────
+    # LOGO (descomenta si lo usas)
+    # st.logo("logo.png", size="large")  # o tu ruta al logo
+
+    # ────────────────────────────────────────────────
+    # SIDEBAR (tus controles de parámetros)
+    # ────────────────────────────────────────────────
+    with st.sidebar:
+        st.header("Parámetros de diseño")
+        P_el = st.slider("Potencia eléctrica nominal (MW)", 0.5, 50.0, 5.0, 0.5)
+        η_el_pct = st.slider("Eficiencia eléctrica (%)", 28.0, 45.0, 35.0)
+        η_el = η_el_pct / 100.0
+        η_rec_pct = st.slider("Eficiencia de recuperación térmica (%)", 65.0, 95.0, 82.0)
+        η_rec = η_rec_pct / 100.0
+        Q_dem = st.number_input("Demanda térmica útil (MW)", 1.0, 150.0, 10.0, step=0.5)
+        h_op = st.number_input("Horas operación anual (h/año)", 4000, 8760, 7500, step=500)
+        PCI = st.number_input("PCI gas natural (MJ/Nm³)", 30.0, 42.0, 36.5, 0.1)
+        st.subheader("Datos económicos")
+        precio_cfe = st.number_input("Tarifa CFE evitada (USD/kWh)", 0.08, 0.18, 0.125, 0.005)
+        precio_gas_mmbtu = st.number_input("Precio gas natural (USD/MMBtu)", 3.0, 10.0, 5.0, 0.1)
+        eta_caldera_pct = st.slider("Eficiencia caldera convencional (%)", 75.0, 90.0, 82.0)
+        eta_caldera = eta_caldera_pct / 100.0
+        st.subheader("Inversión estimada (valores de mercado 2026)")
+        costo_por_mw = st.slider(
+            "Costo por MW instalado (USD/MW) – CHP gas natural",
+            800000, 2500000, 1500000, step=50000,
+            help="Rango realista de mercado México 2026"
+        )
+        inversion_inicial_usd = P_el * costo_por_mw
+        st.session_state.precio_gas_mmbtu = precio_gas_mmbtu
+
+        # Logout dentro del sidebar (muy práctico)
+        authenticator.logout("Cerrar sesión", location='sidebar')
+
+    # ────────────────────────────────────────────────
+    # CÁLCULOS (tu código original aquí)
+    # ────────────────────────────────────────────────
+    energetico = calcular_energetico(P_el, η_el, η_rec, Q_dem, h_op, PCI)
+    precio_gas_usd_mwh = st.session_state.precio_gas_mmbtu / 0.293
+    economico = calcular_economico(energetico, precio_cfe, precio_gas_usd_mwh, eta_caldera, inversion_inicial_usd)
+    em_sen, em_chp, em_evit = calcular_emisiones(energetico['E_el_an_MWh'], energetico['E_comb_an_MWh'])
+
+    # ────────────────────────────────────────────────
+    # ALERTAS
+    # ────────────────────────────────────────────────
+    if energetico['Q_rec_teor'] < Q_dem:
+        st.warning(f"⚠️ Recuperación térmica limitante: solo se aprovechan {energetico['Q_util']:.1f} MW de {Q_dem:.1f} MW demandados.")
+    if economico['ahorro_neto'] < 0:
+        st.error(f"⚠️ Pérdida neta anual: ${economico['ahorro_neto']:,.0f}")
+    if η_el > 0.40:
+        st.warning("⚠️ Eficiencia eléctrica > 40% → temperatura de gases más baja → recuperación térmica real posiblemente menor. Validar con fabricante.")
+
+    # ────────────────────────────────────────────────
+    # TABS (todo tu contenido de pestañas aquí)
+    # ────────────────────────────────────────────────
+    tab_dashboard, tab_balance, tab_econ, tab_emis, tab_detalle, tab_sens = st.tabs([
+        "Dashboard", "Balance Energético", "Económico", "Emisiones", "Cálculos Detallados", "Sensibilidad"
+    ])
+
+    # Pega aquí todo el contenido de tus with tab_...: (Dashboard, Balance, Económico, etc.)
+    # Ejemplo para Dashboard (pega el tuyo real):
+    with tab_dashboard:
+        st.title("Dashboard – Análisis de Cogeneración 2026")
+        # ... tus cols1, cols2, métricas, gráfica Henry Hub, etc.
+
+    # Con tab_balance, tab_econ, etc. igual
+
+elif authentication_status is False:
+    st.error("Usuario o contraseña incorrectos 😕")
+
+elif authentication_status is None:
+    st.warning("Ingresa tus credenciales para continuar 🔒")
     # ────────────────────────────────────────────────
     # SIDEBAR
     # ────────────────────────────────────────────────
