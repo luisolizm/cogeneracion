@@ -47,7 +47,7 @@ if authentication_status:
 
     # ────────────────────────────────────────────────
     # LOGO (descomenta si lo usas)
-    # st.logo("logo.png", size="large")  # o tu ruta al logo
+     st.logo("logo.png", size="large")  # o tu ruta al logo
 
     # ────────────────────────────────────────────────
     # SIDEBAR (tus controles de parámetros)
