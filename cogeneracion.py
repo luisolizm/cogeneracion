@@ -294,9 +294,8 @@ with tab_detalle:
 
     with st.expander("4. Eficiencia global de la cogeneración", expanded=False):
         st.latex(r"\eta_{\text{global}} = \frac{P_{\text{el}} + Q_{\text{util}}}{Q_{\text{comb}}}")
-        st.write("**Explicación:** Representa la fracción del combustible que se convierte en energía útil (eléctrica + térmica aprovechada).")
+        st.write("Representa la fracción del combustible que se convierte en energía útil (eléctrica + térmica aprovechada).")
     
-        st.write(f"**Sustitución numérica paso a paso:**")
         st.write(f"- Potencia eléctrica: **{P_el:.2f} MW**")
         st.write(f"- Calor útil aprovechado: **{energetico['Q_util']:.2f} MW**")
         st.write(f"- Energía útil total: {P_el + energetico['Q_util']:.2f} MW")
