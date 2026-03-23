@@ -3,7 +3,7 @@ credentials:
     luxem:
       email: luis.soliz@teamleading-cpm.com
       name: Luis Soliz
-      password: CambiaEstaPorUnaMuyFuerte2026!   # ¡cámbiala! (se hashea automáticamente)
+      password: luxemsuministrocalificado   # ¡cámbiala! (se hashea automáticamente)
 cookie:
   expiry_days: 30
   key: tu_clave_secreta_larga_y_random_aqui   # pon algo único, ej: "miapp_segura_2026_xyz987"
